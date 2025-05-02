@@ -33,13 +33,31 @@
       object-fit: cover;
       display: block;
     }
+
+    .refresh-button {
+      display: block;
+      width: 100%;
+      margin-top: 20px;
+      padding: 15px;
+      text-align: center;
+      background-color: #444;
+      color: white;
+      font-size: 18px;
+      border-radius: 8px;
+      text-decoration: none;
+    }
   </style>
 </head>
 <body>
   <div class="grid" id="grid"></div>
+  <a href="" class="refresh-button">画像を更新する</a>
 
   <script>
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const grid = document.getElementById('grid');
+    const totalNeeded = 15;
+    const lengths = [5, 6, 7];
+    let successCount = 0;
 
     function randomId(length) {
       let id = '';
@@ -49,7 +67,9 @@
       return id;
     }
 
-    function createImgurTile(id) {
+    function tryAddImage() {
+      const len = lengths[Math.floor(Math.random() * lengths.length)];
+      const id = randomId(len);
       const imgUrl = `https://i.imgur.com/${id}.jpg`;
       const linkUrl = `imgur://gallery/${id}`;
 
@@ -59,21 +79,27 @@
 
       const img = document.createElement('img');
       img.src = imgUrl;
-      img.onerror = () => a.remove(); // 画像が無かったら消す
 
-      a.appendChild(img);
-      return a;
+      img.onload = () => {
+        if (img.naturalWidth > 200 && img.naturalHeight > 100) {
+          a.appendChild(img);
+          grid.appendChild(a);
+          successCount++;
+        }
+        if (successCount < totalNeeded) {
+          tryAddImage();
+        }
+      };
+
+      img.onerror = () => {
+        if (successCount < totalNeeded) {
+          tryAddImage();
+        }
+      };
     }
 
-    const grid = document.getElementById('grid');
-    const total = 60; // 表示する画像の数
-    const lengths = [5, 6, 7];
-
-    for (let i = 0; i < total; i++) {
-      const len = lengths[Math.floor(Math.random() * lengths.length)];
-      const id = randomId(len);
-      const tile = createImgurTile(id);
-      grid.appendChild(tile);
+    for (let i = 0; i < totalNeeded; i++) {
+      tryAddImage();
     }
   </script>
 </body>
