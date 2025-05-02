@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>Imgur無限スクロールビューア</title>
+  <style>
+    body {
+      margin: 0;
+      background: #111;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif;
+    }
+
+    .image-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+    }
+
+    .image-container img {
+      width: 100%;
+      height: auto;
+      border-radius: 6px;
+      display: block;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 20px;
+      font-size: 18px;
+      color: #aaa;
+    }
+  </style>
+</head>
+<body>
+  <div class="image-container" id="container"></div>
+  <div class="loading" id="loading">読み込み中...</div>
+
+  <script>
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const container = document.getElementById('container');
+    const loading = document.getElementById('loading');
+    const lengths = [5, 6, 7];
+    let loadingImages = false;
+    const batchSize = 10;
+
+    function randomId(length) {
+      let id = '';
+      for (let i = 0; i < length; i++) {
+        id += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return id;
+    }
+
+    function loadImages(count) {
+      if (loadingImages) return;
+      loadingImages = true;
+
+      let loaded = 0;
+      function tryLoad() {
+        const len = lengths[Math.floor(Math.random() * lengths.length)];
+        const id = randomId(len);
+        const url = `https://i.imgur.com/${id}.jpg`;
+
+        const img = document.createElement('img');
+        img.src = url;
+        img.alt = id;
+
+        img.onload = () => {
+          if (img.naturalWidth > 200 && img.naturalHeight > 100) {
+            container.appendChild(img);
+            loaded++;
+          }
+          if (loaded < count) {
+            tryLoad();
+          } else {
+            loadingImages = false;
+          }
+        };
+
+        img.onerror = () => {
+          if (loaded < count) {
+            tryLoad();
+          } else {
+            loadingImages = false;
+          }
+        };
+      }
+
+      for (let i = 0; i < count; i++) {
+        tryLoad();
+      }
+    }
+
+    function onScroll() {
+      if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 300) {
+        loadImages(batchSize);
+      }
+    }
+
+    window.addEventListener('scroll', onScroll);
+    loadImages(batchSize);
+  </script>
+</body>
+</html>
